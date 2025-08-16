@@ -6,11 +6,9 @@ export default function InfoModal({ open, onClose }) {
     <Modal
       open={open}
       onClose={onClose}
-      /* Frosted panel that adapts to any DaisyUI theme (light, business, etc.) */
       panelClassName="
         border bg-base-100/60 text-base-content backdrop-blur-md
       "
-      /* Match cell/header outline color */
       style={{ borderColor: "var(--sg-cell-border-idle)" }}
     >
       <div className="space-y-5">

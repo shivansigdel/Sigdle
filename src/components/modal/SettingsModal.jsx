@@ -24,7 +24,6 @@ export default function SettingsModal({ open, onClose }) {
     setLocked(!canChangeModeNow());
   }, [open]);
 
-  // Atomic theme swap + keep Tailwind `dark:` in sync for "business"
   const applyTheme = (t) => {
     const root = document.documentElement;
     root.classList.add("sg-no-trans");
@@ -81,7 +80,6 @@ export default function SettingsModal({ open, onClose }) {
             : `Hard Mode generates every possible NBA player (G-league, Bench Warmers, etc...)`}
         </p>
 
-        {/* Theme toggle: light <-> business (dark) */}
         <label className="label cursor-pointer justify-between">
           <span className="text-base-content">Dark Mode </span>
           <input
@@ -97,7 +95,6 @@ export default function SettingsModal({ open, onClose }) {
           />
         </label>
 
-        {/* Placeholder feature */}
         <label className="label cursor-pointer justify-start gap-3">
           <span className="text-base-content">
             Colorblind hints (coming soon)

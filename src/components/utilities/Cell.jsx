@@ -1,7 +1,6 @@
 export default function Cell({ value = "", state = "idle", hint, delay }) {
   const animate = Number.isFinite(delay) && delay >= 0;
 
-  // theme-aware idle border via CSS var
   const idleColors = {
     bg: "hsl(var(--b2))",
     bd: "var(--sg-cell-border-idle)",
@@ -21,7 +20,6 @@ export default function Cell({ value = "", state = "idle", hint, delay }) {
     "relative aspect-square w-full flex items-center justify-center rounded-md border " +
     "text-xs md:text-sm font-medium origin-top will-change-transform [backface-visibility:hidden]";
 
-  // ✅ no inline animation; only set vars + optional delay var
   const style = animate
     ? {
         "--bg-idle": idleColors.bg,
@@ -55,7 +53,6 @@ export default function Cell({ value = "", state = "idle", hint, delay }) {
               ? {
                   opacity: 0,
                   animation: "sg-appear 1ms linear both",
-                  // after the 600ms flip + tiny buffer
                   animationDelay: `calc(var(--sg-flip-delay, 0ms) + 620ms)`,
                 }
               : undefined

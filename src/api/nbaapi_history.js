@@ -3,13 +3,18 @@
 // ==========================
 // Config & Logging
 // ==========================
-const API_BASE = "/nbaapi";
+
+// Show debug logs only during local development (Vite)
+const DEBUG = import.meta.env.MODE === "development";
 const LOG_PREFIX = "[nbaapi]";
 
-// Toggle to reduce console chatter
-const DEBUG = true;
-const log = (...args) => DEBUG && console.log(LOG_PREFIX, ...args);
-const warn = (...args) => console.warn(LOG_PREFIX, ...args);
+// In dev: log/warn. In prod: no-op. Errors always surface.
+const log = (...args) => {
+  if (DEBUG) console.log(LOG_PREFIX, ...args);
+};
+const warn = (...args) => {
+  if (DEBUG) console.warn(LOG_PREFIX, ...args);
+};
 const err = (...args) => console.error(LOG_PREFIX, ...args);
 
 // ==========================
@@ -19,16 +24,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Safe JSON fetch with:
- * - request logging
+ * - request logging (dev only)
  * - 404 handling (returns null)
  * - basic retry for transient 5xx
  */
 async function fetchJSON(url, { retries = 1, retryDelayMs = 250 } = {}) {
-  if (DEBUG) {
-    // Mirror your console lines like the ones you shared
-    // Example: nbaapi_history.js:15 [nbaapi] GET /nbaapi/PlayerDataTotals/query?...
-    console.log("nbaapi_history.js:15", LOG_PREFIX, "GET", url);
-  }
+  log("GET", url);
 
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -66,14 +67,10 @@ async function fetchJSON(url, { retries = 1, retryDelayMs = 250 } = {}) {
   }
 }
 
-// ==========================
-// Diacritics handling
-// ==========================
-
 const toASCII = (s) =>
-  s
-    .normalize("NFD") // split base + combining marks
-    .replace(/\p{M}/gu, "") // remove combining marks
+  String(s ?? "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
     .replace(/ß/g, "ss")
     .replace(/ø/g, "o")
     .replace(/ł/g, "l")
@@ -83,78 +80,28 @@ const keyify = (s) =>
   toASCII(s)
     .toLowerCase()
     .replace(/[\s'’.-]/g, "");
+
 const hasDiacritics = (name) =>
-  keyify(name) !== name.toLowerCase().replace(/[\s'’.-]/g, "");
+  keyify(name) !==
+  String(name ?? "")
+    .toLowerCase()
+    .replace(/[\s'’.-]/g, "");
 
-// In-memory index built from active players
-let _indexReady = null; // Promise<void>
-let _asciiIndex = new Map(); // Map<asciiKey, Player[]>
-let _playersById = new Map(); // Map<id, Player>
+// No-op index
+let _indexReady = Promise.resolve();
+let _asciiIndex = new Map();
 
-// Build once; safe to call multiple times
-async function initPlayerNameIndex(fetchBase = API_BASE) {
-  if (_indexReady) return _indexReady;
-
-  _indexReady = (async () => {
-    try {
-      log("Loading active players…");
-      const res = await fetch(`${fetchBase}/players/active`);
-      if (!res.ok) throw new Error(`active players ${res.status}`);
-      const players = await res.json(); // [{id, name, teamAbbr, position, ...}]
-
-      _asciiIndex = new Map();
-      _playersById = new Map(players.map((p) => [p.id, p]));
-
-      for (const p of players) {
-        if (!p?.name) continue;
-        if (!hasDiacritics(p.name)) continue; // only track names with diacritics
-        const asciiKey = keyify(p.name); // e.g., "Luka Dončić" -> "lukadoncic"
-        const list = _asciiIndex.get(asciiKey) || [];
-        list.push(p);
-        _asciiIndex.set(asciiKey, list);
-      }
-
-      log("Diacritics index built:", _asciiIndex.size, "keys");
-    } catch (e) {
-      warn("Failed to build diacritics index:", e.message);
-      _asciiIndex = new Map();
-      _playersById = new Map();
-    }
-  })();
-
+async function initPlayerNameIndex() {
+  // No network call; immediately resolved
   return _indexReady;
 }
 
-/**
- * Given ASCII-ish name (e.g., from ESPN) and optional context,
- * return the official display name with diacritics if known.
- */
-function resolveOfficialName(asciiName, ctx = {}) {
-  if (!_asciiIndex) return asciiName; // not initialized yet; no-op
-  const k = keyify(asciiName);
-  const candidates = _asciiIndex.get(k);
-  if (!candidates || candidates.length === 0) return asciiName;
-
-  if (candidates.length === 1) return candidates[0].name;
-
-  const { teamAbbr, position } = ctx;
-  if (teamAbbr) {
-    const hit = candidates.find(
-      (p) => (p.teamAbbr || "").toUpperCase() === teamAbbr.toUpperCase()
-    );
-    if (hit) return hit.name;
-  }
-  if (position) {
-    const hit = candidates.find(
-      (p) => (p.position || "").toUpperCase() === position.toUpperCase()
-    );
-    if (hit) return hit.name;
-  }
-  return candidates[0].name;
+// No-op: just return the input name
+function resolveOfficialName(asciiName /*, ctx = {} */) {
+  return asciiName;
 }
 
-// Make sure the index is kicked off early.
-initPlayerNameIndex().catch(() => {});
+// (Removed automatic init; nothing to fetch)
 
 // ==========================
 // Team-code normalization
@@ -173,11 +120,8 @@ const TEAM_FIXES = {
   NJN: "BKN",
   WSB: "WAS",
 
-  // Optional: treat Sonics as Thunder for franchise continuity.
-  // Remove/comment the next line if you want SEA to remain distinct.
   SEA: "OKC",
 
-  // Optional: 90s Grizzlies
   VAN: "MEM",
 };
 
@@ -222,15 +166,15 @@ export async function queryAllTotals({
   pageSize = 1000,
   ctx = {},
 }) {
-  await initPlayerNameIndex();
+  await initPlayerNameIndex(); // no-op, keeps structure
 
-  // Attempt to normalize to official spelling for better backend matches
+  // Keep call site shape; now it's effectively a pass-through
   const canonicalName = resolveOfficialName(playerName, ctx);
   const params = new URLSearchParams({
     playerName: canonicalName,
     pageSize: String(pageSize),
   });
-  const url = `${API_BASE}/PlayerDataTotals/query?${params.toString()}`;
+  const url = `/nbaapi/PlayerDataTotals/query?${params.toString()}`;
   const cacheKey = qKey({ playerName: canonicalName, pageSize });
 
   if (_totalsCache.has(cacheKey)) {
@@ -321,31 +265,18 @@ export async function getCareerTeams(playerName, ctx = {}) {
   }
 }
 
-// ==========================
-// Optional convenience API
-// ==========================
-
-/**
- * Use when you ingest a feed object and want the corrected display name.
- * Example:
- *   const display = canonicalDisplayName(espn.name, { teamAbbr: espn.teamAbbr, position: espn.position });
- */
 export function canonicalDisplayName(feedName, ctx = {}) {
   return resolveOfficialName(feedName, ctx);
 }
 
-/**
- * Explicitly reinitialize the diacritics index (e.g., after a roster update).
- */
 export async function refreshDiacriticsIndex() {
-  _indexReady = null;
+  // reset stubs and return zero keys
+  _indexReady = Promise.resolve();
   _asciiIndex = new Map();
-  _playersById = new Map();
-  await initPlayerNameIndex();
-  return _asciiIndex.size;
+  return _asciiIndex.size; // 0
 }
 
-// For debugging in console if needed
+// For debugging in console if needed (kept as stubs to avoid breaking imports)
 export const __debug = {
   toASCII,
   keyify,
@@ -354,7 +285,6 @@ export const __debug = {
   TEAM_FIXES,
   AGG_CODES,
   _asciiIndex: () => _asciiIndex,
-  _playersById: () => _playersById,
   _totalsCache: () => _totalsCache,
   _careerTeamsCache: () => _careerTeamsCache,
 };

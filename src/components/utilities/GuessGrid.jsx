@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import Cell from "./Cell";
 
 export default function GuessGrid({
@@ -8,7 +7,6 @@ export default function GuessGrid({
   toRowValues,
   maxGuesses,
   solutionTeamSet,
-  /** animate only when this increments (set by Board on new guess) */
   revealTick = 0,
 }) {
   const step = 380;
@@ -30,7 +28,6 @@ export default function GuessGrid({
                 hints: Array(7).fill(undefined),
               };
 
-        // animate only for the newest row when a guess was just added
         const shouldAnimateRow =
           revealTick > 0 && row === guesses.length - 1 && !!g;
 

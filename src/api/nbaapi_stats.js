@@ -4,10 +4,9 @@
 // player objects so the rest of the app keeps working.
 
 import { getAllActivePlayers, stripDiacritics } from "./espn";
-import { getTopPlayers as fallbackHeuristicTop } from "./espn";
 
 const NBAAPI_ROOT = "https://api.server.nbaapi.com";
-const SEASON = 2025; // use the season you want (you tested with 2025)
+const SEASON = 2025;
 
 // ---- utils ----
 const toKey = (name) =>
@@ -43,12 +42,10 @@ async function fetchJSON(url) {
 
 // Pull ALL players for the season by paging (pageSize big to reduce calls)
 async function fetchAllTotals(season = SEASON) {
-  const pageSize = 500; // try a large page size; API supports paging
+  const pageSize = 500;
   let page = 1;
   let all = [];
 
-  // loop on pagination
-  // guard against runaway loops even if pagination info is weird
   for (let safety = 0; safety < 20; safety++) {
     const url =
       `${NBAAPI_ROOT}/api/playertotals?` +
@@ -72,7 +69,7 @@ function normalizeTotalsRow(row) {
   if (!name) return null;
 
   const gp = num(row?.games);
-  const minTotal = num(row?.minutesPg); // this field is actually TOTAL minutes (see your sample)
+  const minTotal = num(row?.minutesPg); // provider quirk: total minutes in your sample
   const fga = num(row?.fieldAttempts);
   const fta = num(row?.ftAttempts);
   const ptsTot = num(row?.points);
@@ -102,15 +99,12 @@ async function fetchSeasonStats() {
     const totals = await fetchAllTotals(SEASON);
     return totals.map(normalizeTotalsRow).filter(Boolean);
   } catch (e) {
-    console.warn(
-      "[stats] fetch failed, falling back to heuristic Top list:",
-      e
-    );
+    console.warn("[stats] fetch failed; using simple roster fallback:", e);
     return [];
   }
 }
 
-// ---- percentile scoring ----
+// ---- percentiles ----
 function percentilesFor(eligible, prop) {
   const arr = eligible.filter((r) => Number.isFinite(r[prop]));
   if (arr.length <= 1) {
@@ -130,13 +124,13 @@ function percentilesFor(eligible, prop) {
  * Returns *ESPN-normalized* player objects.
  */
 export async function getTopPlayers(limit = 250) {
-  // 1) ESPN-normalized roster (shape used everywhere else)
   const roster = await getAllActivePlayers();
 
   // 2) Stats feed
   const stats = await fetchSeasonStats();
   if (stats.length === 0) {
-    return fallbackHeuristicTop(limit);
+    // Simple fallback: trim roster if stats unavailable
+    return roster.slice(0, limit);
   }
 
   // 3) Eligibility gates (tune if you want stricter filters)
@@ -144,7 +138,7 @@ export async function getTopPlayers(limit = 250) {
     (s) => (s.gp ?? 0) >= 15 && (s.minTotal ?? 0) >= 300
   );
   if (eligible.length === 0) {
-    return fallbackHeuristicTop(limit);
+    return roster.slice(0, limit);
   }
 
   // 4) Percentiles per metric

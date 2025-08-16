@@ -6,7 +6,6 @@ export default function Modal({
   onClose,
   children,
   className = "",
-  /** optional alias so callers can pass panelClassName (back-compat) */
   panelClassName,
 }) {
   const [mounted, setMounted] = useState(open);

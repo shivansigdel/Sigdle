@@ -4,7 +4,8 @@ import { Info, BarChart3, Settings } from "lucide-react";
 export default function Header({ onInfo, onStats, onSettings }) {
   // Slightly smaller on phones, comfy on desktop
   const icon =
-    "h-6 w-6 md:h-7 md:w-7 transition-transform duration-150 ease-out group-hover:scale-95 pointer-events-none";
+    "h-6 w-6 md:h-7 md:w-7 transition-transform duration-150 ease-out group-hover:scale-95 pointer-events-none " +
+    "motion-reduce:transition-none motion-reduce:transform-none";
 
   const btn =
     "group inline-flex items-center justify-center rounded-full h-10 w-10 md:h-12 md:w-12 " +
@@ -12,7 +13,8 @@ export default function Header({ onInfo, onStats, onSettings }) {
     "focus:outline-none focus-visible:outline-none ring-inset " +
     "focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600 " +
     "focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 " +
-    "transition duration-150 ease-out active:scale-95";
+    "transition duration-150 ease-out active:scale-95 " +
+    "motion-reduce:transition-none motion-reduce:transform-none";
 
   return (
     <header
@@ -43,7 +45,7 @@ export default function Header({ onInfo, onStats, onSettings }) {
             aria-hidden
             className="absolute inset-0"
             style={{
-              WebkitTextStroke: "2px #241547", // lighter on phones
+              WebkitTextStroke: "2px #241547",
               paintOrder: "stroke fill",
               textShadow:
                 "0 1px 0 #241547, 1px 0 0 #241547, 0 -1px 0 #241547, -1px 0 0 #241547," +
@@ -65,6 +67,7 @@ export default function Header({ onInfo, onStats, onSettings }) {
           "
         >
           <button
+            type="button"
             aria-label="Info"
             title="Info"
             onClick={onInfo}
@@ -73,6 +76,7 @@ export default function Header({ onInfo, onStats, onSettings }) {
             <Info className={icon} strokeWidth={2} absoluteStrokeWidth />
           </button>
           <button
+            type="button"
             aria-label="Stats"
             title="Stats"
             onClick={onStats}
@@ -81,6 +85,7 @@ export default function Header({ onInfo, onStats, onSettings }) {
             <BarChart3 className={icon} strokeWidth={2} absoluteStrokeWidth />
           </button>
           <button
+            type="button"
             aria-label="Settings"
             title="Settings"
             onClick={onSettings}

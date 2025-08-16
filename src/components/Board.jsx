@@ -29,6 +29,14 @@ export default function Board({ onGameEnd, resetNonce }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // small helper to reset suggest UI
+  const resetSuggest = () => {
+    setSuggestions([]);
+    setOpen(false);
+    setLoading(false);
+    setError("");
+  };
+
   // game state
   const [solution, setSolution] = useState(null);
   const [solutionTeams, setSolutionTeams] = useState([]);
@@ -78,55 +86,16 @@ export default function Board({ onGameEnd, resetNonce }) {
     saveSaved({ solution, guesses, gameState, solutionTeams });
   }, [solution, guesses, gameState, solutionTeams]);
 
-  // update the “in progress” flag for your How-to modal logic
   useEffect(() => {
     updateInProgressFlag(gameState, guesses.length);
   }, [gameState, guesses.length]);
 
-  // // 🔎 DEV: log current pools and print Top 250 to console whenever a round is ready
-  // useEffect(() => {
-  //   if (!solution) return;
-  //   let cancelled = false;
-
-  //   (async () => {
-  //     try {
-  //       const mode = getMode(); // "easy" | "hard"
-  //       const [all, top] = await Promise.all([
-  //         getAllActivePlayers(),
-  //         getTopPlayers(), // Top 250
-  //       ]);
-  //       if (cancelled) return;
-
-  //       console.info(
-  //         `[SIGDLE] Mode=${mode} — Top pool: ${top.length} | All: ${all.length}`
-  //       );
-  //       console.table(
-  //         top.map((p) => ({
-  //           id: p.id,
-  //           name: p.name,
-  //           team: p.teamAbbr,
-  //           pos: p.position,
-  //         }))
-  //       );
-  //     } catch (e) {
-  //       console.warn("Pool debug failed:", e);
-  //     }
-  //   })();
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [solution, resetNonce]);
-
-  // respond to App's "Play Again" signal
   useEffect(() => {
     if (resetNonce > 0) {
       handleNewGame();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetNonce]);
 
-  // cleanup any pending reveal timers on unmount
   useEffect(() => {
     return () => {
       if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
@@ -153,7 +122,7 @@ export default function Board({ onGameEnd, resetNonce }) {
       setSuggestions([]);
       setOpen(false);
       setError("");
-      setRevealTick(0); // reset animation tick
+      setRevealTick(0);
     } catch (e) {
       console.error("Failed to start new round:", e);
     }
@@ -164,10 +133,7 @@ export default function Board({ onGameEnd, resetNonce }) {
     if (gameState !== "playing") return;
     const q = term.trim();
     if (q.length < 2) {
-      setSuggestions([]);
-      setOpen(false);
-      setLoading(false);
-      setError("");
+      resetSuggest();
       return;
     }
     setOpen(true);
@@ -188,8 +154,7 @@ export default function Board({ onGameEnd, resetNonce }) {
       } catch (e) {
         if (!cancelled && cur === term.trim()) {
           console.error("suggest failed (ESPN):", e);
-          setSuggestions([]);
-          setLoading(false);
+          resetSuggest();
           setError(
             typeof e?.message === "string" ? e.message : "Failed to load"
           );
@@ -210,8 +175,8 @@ export default function Board({ onGameEnd, resetNonce }) {
       if (!wrapperRef.current) return;
       if (!wrapperRef.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
   }, []);
 
   const handleBlur = () => setOpen(false);
@@ -307,9 +272,7 @@ export default function Board({ onGameEnd, resetNonce }) {
             onFocus={handleFocus}
           />
 
-          {gameOver && (
-            <div className="absolute inset-0 rounded-lg pointer-events-auto bg-transparent" />
-          )}
+          {/* overlay removed; suggestions already gated by !gameOver */}
 
           {term.trim().length >= 2 && open && !gameOver && (
             <ul

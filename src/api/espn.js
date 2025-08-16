@@ -239,7 +239,7 @@ function normalizePlayer(item, teamMeta) {
   return {
     id: String(a?.id || item?.id || `${teamMeta.abbreviation}-${name}`),
     name,
-    teamAbbr: teamMeta.abbreviation, // standardized 3-letter
+    teamAbbr: teamMeta.abbreviation,
     position: pos,
     age: toAge(dob),
     jersey,
@@ -344,61 +344,4 @@ export async function suggestPlayers(term, limit = 10) {
     if (hits.length >= limit) break;
   }
   return hits;
-}
-
-/* -------------------------
-   Easy-mode "Top N" pool
-   (lenient scoring; stable tie-breakers)
--------------------------- */
-
-export const EASY_LIMIT = 250;
-
-// A permissive score so rotation players float up.
-// Avoid hard requirements (like jersey) to prevent dropping legit players.
-function quickScore(p) {
-  let s = 0;
-  if (p.position && p.position !== "—") s += 2; // has a usable position
-  const age = Number.isFinite(p.age) ? p.age : 0;
-  if (age >= 18 && age <= 38) s += 2; // plausible age band
-  if (Number.isFinite(p.jersey)) s += 1; // jersey present helps
-  if (Number.isFinite(p.heightIn) && p.heightIn >= 70 && p.heightIn <= 86)
-    s += 1; // plausible NBA height
-  return s;
-}
-
-export async function getTopPlayers(limit = EASY_LIMIT) {
-  const all = await getAllActivePlayers();
-
-  const scored = all
-    .map((p) => ({ p, s: quickScore(p) }))
-    .sort((a, b) => {
-      if (b.s !== a.s) return b.s - a.s;
-
-      // Tie-breakers to keep order deterministic and sensible:
-      // 1) prefer players with jersey numbers
-      const j =
-        (Number.isFinite(b.p.jersey) ? 1 : 0) -
-        (Number.isFinite(a.p.jersey) ? 1 : 0);
-      if (j) return j;
-
-      // 2) slight preference by position (guards/wings more likely to be rotation)
-      const posRank = (x) =>
-        x?.p?.position === "G"
-          ? 2
-          : x?.p?.position === "F"
-          ? 1
-          : x?.p?.position === "C"
-          ? 0
-          : -1;
-      const pr = posRank(b) - posRank(a);
-      if (pr) return pr;
-
-      // 3) team, then name for stability
-      const byTeam = (a.p.teamAbbr || "").localeCompare(b.p.teamAbbr || "");
-      if (byTeam) return byTeam;
-
-      return (a.p.name || "").localeCompare(b.p.name || "");
-    });
-
-  return scored.slice(0, limit).map((x) => x.p);
 }

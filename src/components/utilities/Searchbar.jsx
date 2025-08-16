@@ -37,7 +37,6 @@ export default function Searchbar({
           "
         />
 
-        {/* Persistent, theme-adaptive border (no focus effect) */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-lg"
