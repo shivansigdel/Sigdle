@@ -6,7 +6,7 @@ export const HEADERS = [
   "Team",
   "Conf",
   "Div",
-  "Position",
+  "Pos",
   "Height",
   "Age",
   "Jersey #",

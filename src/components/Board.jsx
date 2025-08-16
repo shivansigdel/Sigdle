@@ -261,7 +261,7 @@ export default function Board({ onGameEnd, resetNonce }) {
       setOpen(false);
 
       // compute reveal time: (last col start) + flip duration + tiny buffer
-      const COLS = headers.length; // 7
+      const COLS = headers.length;
       const STAGGER_MS = 380; // must match GuessGrid
       const FLIP_MS = 600; // must match Cell's DURATION
       const BUFFER_MS = 60;
@@ -295,7 +295,8 @@ export default function Board({ onGameEnd, resetNonce }) {
 
   return (
     <section className="w-full flex justify-center">
-      <div className="w-full max-w-[48rem] px-4 md:px-6">
+      {/* ↓ tighter padding on phones = wider grid = bigger cells */}
+      <div className="w-full max-w-[48rem] px-2 sm:px-4 md:px-6">
         {/* search + overlay suggestions */}
         <div className="relative w-full mt-3 md:mt-4" ref={wrapperRef}>
           <Searchbar
@@ -357,17 +358,10 @@ export default function Board({ onGameEnd, resetNonce }) {
           )}
         </div>
 
-        {/* {solution && (
-          <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
-            <span className="font-mono opacity-70">[debug]</span> Solution:{" "}
-            {solution.name} — {solution.teamAbbr}
-          </div>
-        )} */}
-
         {/* column headers */}
         <div className="mt-4 mb-1">
           <div
-            className="grid justify-items-center gap-3 text-xs font-medium uppercase tracking-wide text-neutral-600 dark:text-neutral-400"
+            className="grid justify-items-center gap-2 sm:gap-3 text-xs font-medium uppercase tracking-wide text-neutral-600 dark:text-neutral-400"
             style={{
               gridTemplateColumns: `repeat(${headers.length}, minmax(0, 1fr))`,
             }}

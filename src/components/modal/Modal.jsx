@@ -36,7 +36,9 @@ export default function Modal({
       aria-modal="true"
       onClick={closeOnBackdrop}
       className={[
-        "fixed inset-0 z-50 flex items-center justify-center",
+        "fixed inset-0 z-50 flex justify-center",
+        "items-start sm:items-center",
+        "p-4 sm:p-0",
         "transition-opacity duration-150 ease-out",
         visible ? "bg-black/60 opacity-100" : "bg-black/0 opacity-0",
         "motion-reduce:transition-none",
@@ -44,28 +46,29 @@ export default function Modal({
     >
       <div
         className={[
-          "relative w-full max-w-md rounded-2xl shadow-2xl p-6 border",
-          // theme-adaptive panel (no blur)
+          "relative rounded-2xl shadow-2xl border",
           "bg-base-100/60 text-base-content",
-          // only animate opacity & transform for smoothness
+          "w-auto mx-4 sm:mx-0 p-4 sm:p-6",
+          "max-w-[min(92vw,40rem)] sm:max-w-md",
+          "max-h-[80vh] overflow-auto overscroll-contain",
           "transition-[opacity,transform] duration-150 ease-out",
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
           "motion-reduce:transition-none motion-reduce:transform-none",
           className || panelClassName || "",
         ].join(" ")}
-        // match cell/header outline color
         style={{ borderColor: "var(--sg-cell-border-idle)" }}
       >
-        {/* close button */}
+        {/* close button (no outline/border) */}
         <button
           type="button"
           aria-label="Close"
           onClick={onClose}
           className={[
-            // same placement/size, but no bg/border
             "absolute right-3 top-3 grid place-items-center h-9 w-9 rounded-xl",
-            "text-base-content/70 hover:text-base-content",
-            "bg-transparent", // ← no tint
+            "bg-transparent text-base-content/70",
+            "hover:bg-base-content/10 hover:text-base-content",
+            "focus:outline-none focus:ring-2 focus:ring-base-content/20",
+            "focus:ring-offset-2 focus:ring-offset-base-100",
             "transition-colors duration-150",
           ].join(" ")}
         >
