@@ -1,0 +1,34 @@
+@base = https://api.balldontlie.io/v1
+@apiKey = {{$dotenv VITE_NBA_API}}   // reads from your .env file
+
+### Quick sanity: search players by prefix (e.g., "ste")
+GET {{base}}/players?search=ste&per_page=5
+Authorization: {{apiKey}}
+
+> {%
+// Parse JSON and run a couple quick checks
+const body = JSON.parse(response.body);
+client.test("Status is 200", () => client.assert(response.status === 200));
+client.test("Got data array", () => client.assert(Array.isArray(body.data)));
+client.log("Players:", body.data.map(p => `${p.first_name} ${p.last_name}`).join(", "));
+%}
+
+### Direct fetch by known ID (Stephen Curry is commonly 19 here)
+GET {{base}}/players/19
+Authorization: {{apiKey}}
+
+> {% 
+const p = JSON.parse(response.body);
+client.test("Status is 200", () => client.assert(response.status === 200));
+client.log(`Player: ${p.first_name} ${p.last_name} — Team: ${p.team?.abbreviation}`);
+%}
+
+### Another search cluster (e.g., "jalen")
+GET {{base}}/players?search=jalen&per_page=8
+Authorization: {{apiKey}}
+
+> {% 
+const body = JSON.parse(response.body);
+client.test("Status is 200", () => client.assert(response.status === 200));
+client.log("Jalens:", body.data.map(p => `${p.first_name} ${p.last_name}`).join(", "));
+%}
