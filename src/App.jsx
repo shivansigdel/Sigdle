@@ -116,7 +116,11 @@ export default function App() {
       <Board onGameEnd={handleGameEnd} resetNonce={resetNonce} />
 
       {activeModal === "info" && (
-        <InfoModal open onClose={() => setActiveModal(null)} />
+        <InfoModal
+          open
+          onClose={() => setActiveModal(null)}
+          className="bg-base-100 shadow-lg"
+        />
       )}
 
       {activeModal === "stats" && (
@@ -128,11 +132,16 @@ export default function App() {
           solution={endInfo?.solution}
           guessesUsed={endInfo?.guessesUsed}
           maxGuesses={MAX_GUESSES}
+          className="bg-base-100 shadow-lg"
         />
       )}
 
       {activeModal === "settings" && (
-        <SettingsModal open onClose={() => setActiveModal(null)} />
+        <SettingsModal
+          open
+          onClose={() => setActiveModal(null)}
+          className="bg-base-100 shadow-lg"
+        />
       )}
     </div>
   );

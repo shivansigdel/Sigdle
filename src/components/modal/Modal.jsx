@@ -46,7 +46,7 @@ export default function Modal({
       <div
         className={[
           "relative rounded-2xl shadow-2xl border",
-          "bg-base-100/60 text-base-content",
+          "bg-base-100 text-base-content",
           "w-auto mx-4 sm:mx-0 p-4 sm:p-6",
           "max-w-[min(92vw,40rem)] sm:max-w-md",
           "max-h-[80vh] overflow-auto overscroll-contain",

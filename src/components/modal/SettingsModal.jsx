@@ -47,7 +47,7 @@ export default function SettingsModal({ open, onClose }) {
           <input
             key={`hard-${hard}-${locked}-${open ? 1 : 0}`}
             type="checkbox"
-            className="toggle bg-white/30 border-white/30 checked:bg-red-500 checked:border-red-500"
+            className="toggle border border-gray-400 bg-white checked:bg-red-500 checked:border-red-500"
             defaultChecked={hard}
             disabled={locked}
             aria-label="Hard mode"
@@ -85,13 +85,13 @@ export default function SettingsModal({ open, onClose }) {
           <input
             key={`theme-${theme}-${open ? 1 : 0}`}
             type="checkbox"
-            className="toggle bg-white/30 border-white/30 checked:bg-white checked:border-white"
+            className="toggle border border-gray-400 bg-white checked:bg-white checked:border-white"
             checked={theme === "business"}
             onChange={(e) =>
               applyTheme(e.target.checked ? "business" : "light")
             }
-            aria-label="Toggle business theme"
-            title="Switch between light and business"
+            aria-label="Toggle dark theme"
+            title="Switch between light and dark mode"
           />
         </label>
 
@@ -101,7 +101,7 @@ export default function SettingsModal({ open, onClose }) {
           </span>
           <input
             type="checkbox"
-            className="toggle bg-white border-white checked:bg-white checked:border-white"
+            className="toggle border border-gray-400 bg-white checked:bg-white checked:border-white"
             disabled
           />
         </label>
