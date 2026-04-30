@@ -1,15 +1,25 @@
 // src/api/espn.js
 // ESPN helper (normalized team abbrs + fallback conference/div + height support)
 
-const TEAMS_URL =
-  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams";
+const TEAMS_URL = "/espnapi/sports/basketball/nba/teams";
 const teamDetailUrl = (id) =>
-  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${id}?enable=roster`;
+  `/espnapi/sports/basketball/nba/teams/${id}?enable=roster`;
 
 async function fetchJSON(url) {
-  const r = await fetch(url, { cache: "no-store" });
-  if (!r.ok) throw new Error(`ESPN ${r.status} for ${url}`);
-  return r.json();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const r = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!r.ok) throw new Error(`ESPN ${r.status} for ${url}`);
+    return r.json();
+  } catch (e) {
+    if (e?.name === "AbortError") {
+      throw new Error(`ESPN timeout for ${url}`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ESPN short codes -> standard 3-letter
@@ -300,9 +310,16 @@ export async function getAllActivePlayers() {
     const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
       const { at, data } = JSON.parse(cached);
-      if (Date.now() - at < CACHE_MS) return data;
+      const cacheFresh = Number.isFinite(at) && Date.now() - at < CACHE_MS;
+      if (cacheFresh && Array.isArray(data)) return data;
+      // Corrupt/stale cache shape should not block fresh fetches.
+      sessionStorage.removeItem(CACHE_KEY);
     }
-  } catch {}
+  } catch {
+    try {
+      sessionStorage.removeItem(CACHE_KEY);
+    } catch {}
+  }
 
   const teams = await getAllTeams();
   const results = await Promise.allSettled(teams.map(getRosterForTeam));
@@ -336,10 +353,11 @@ export async function suggestPlayers(term, limit = 10) {
   const q = stripDiacritics(term).trim().toLowerCase();
   if (!q) return [];
   const list = await getAllActivePlayers();
+  if (!Array.isArray(list) || list.length === 0) return [];
 
   const hits = [];
   for (const p of list) {
-    const n = stripDiacritics(p.name).toLowerCase();
+    const n = stripDiacritics(p?.name || "").toLowerCase();
     if (n.includes(q)) hits.push(p);
     if (hits.length >= limit) break;
   }
