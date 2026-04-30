@@ -13,14 +13,6 @@ export default defineConfig({
         // /nbaapi/foo -> /api/foo
         rewrite: (p) => p.replace(/^\/nbaapi(?=\/|$)/, "/api"),
       },
-      // Route ESPN calls through Vite to avoid browser CORS issues.
-      "^/espnapi(/|$)": {
-        target: "https://site.api.espn.com",
-        changeOrigin: true,
-        secure: true,
-        // /espnapi/foo -> /apis/site/v2/foo
-        rewrite: (p) => p.replace(/^\/espnapi(?=\/|$)/, "/apis/site/v2"),
-      },
     },
   },
 });

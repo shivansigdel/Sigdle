@@ -35,20 +35,9 @@ const computeTS = (points, fga, fta) => {
 
 // ---- fetch & normalize totals ----
 async function fetchJSON(url) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-  try {
-    const r = await fetch(url, { cache: "no-store", signal: controller.signal });
-    if (!r.ok) throw new Error(`stats ${r.status} for ${url}`);
-    return r.json();
-  } catch (e) {
-    if (e?.name === "AbortError") {
-      throw new Error(`stats timeout for ${url}`);
-    }
-    throw e;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`stats ${r.status} for ${url}`);
+  return r.json();
 }
 
 // Pull ALL players for the season by paging (pageSize big to reduce calls)
