@@ -42,7 +42,6 @@ export default function Board({ onGameEnd, resetNonce }) {
   const [solutionTeams, setSolutionTeams] = useState([]);
   const [guesses, setGuesses] = useState([]);
   const [gameState, setGameState] = useState("playing");
-  const [roundReady, setRoundReady] = useState(false);
 
   const [revealTick, setRevealTick] = useState(0);
 
@@ -75,10 +74,8 @@ export default function Board({ onGameEnd, resetNonce }) {
         setSolutionTeams(solutionTeams);
         setGuesses(guesses);
         setGameState(gameState);
-        setRoundReady(!!solution);
       } catch (e) {
         console.error("Failed to init board:", e);
-        setRoundReady(false);
       }
     })();
   }, []);
@@ -121,7 +118,6 @@ export default function Board({ onGameEnd, resetNonce }) {
       setSolutionTeams(next.solutionTeams);
       setGuesses(next.guesses);
       setGameState(next.gameState);
-      setRoundReady(!!next.solution);
       setTerm("");
       setSuggestions([]);
       setOpen(false);
@@ -129,33 +125,6 @@ export default function Board({ onGameEnd, resetNonce }) {
       setRevealTick(0);
     } catch (e) {
       console.error("Failed to start new round:", e);
-      setRoundReady(false);
-    }
-  }
-
-  async function ensureRoundReady() {
-    if (solution) {
-      setRoundReady(true);
-      return true;
-    }
-    try {
-      const next = await newRound({
-        getAllActivePlayers,
-        getTopPlayers,
-        getCareerTeams,
-        mode: getMode(),
-      });
-      setSolution(next.solution);
-      setSolutionTeams(next.solutionTeams);
-      setGuesses(next.guesses);
-      setGameState(next.gameState);
-      const ready = !!next.solution;
-      setRoundReady(ready);
-      return ready;
-    } catch (e) {
-      console.error("Failed to recover round:", e);
-      setRoundReady(false);
-      return false;
     }
   }
 
@@ -219,14 +188,6 @@ export default function Board({ onGameEnd, resetNonce }) {
   const submitGuess = async (e) => {
     e.preventDefault();
     if (gameState !== "playing") return;
-    if (!solution) {
-      const ready = await ensureRoundReady();
-      if (!ready) {
-        setError("Still loading game data. Please try again.");
-        setOpen(false);
-        return;
-      }
-    }
 
     const q = term.trim();
     if (!q || guesses.length >= MAX_GUESSES) return;
@@ -284,16 +245,8 @@ export default function Board({ onGameEnd, resetNonce }) {
     }
   };
 
-  const pickSuggestion = async (s) => {
+  const pickSuggestion = (s) => {
     if (gameState !== "playing") return;
-    if (!solution) {
-      const ready = await ensureRoundReady();
-      if (!ready) {
-        setError("Still loading game data. Please try again.");
-        setOpen(false);
-        return;
-      }
-    }
     setOpen(false);
     setTerm("");
     if (guesses.length >= MAX_GUESSES) return;
@@ -317,7 +270,6 @@ export default function Board({ onGameEnd, resetNonce }) {
             onSubmit={submitGuess}
             onBlur={handleBlur}
             onFocus={handleFocus}
-            placeholder={roundReady ? "Search player…" : "Loading players…"}
           />
 
           {/* overlay removed; suggestions already gated by !gameOver */}
