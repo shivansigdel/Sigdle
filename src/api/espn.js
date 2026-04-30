@@ -1,9 +1,10 @@
 // src/api/espn.js
 // ESPN helper (normalized team abbrs + fallback conference/div + height support)
 
-const TEAMS_URL = "/espnapi/sports/basketball/nba/teams";
+const TEAMS_URL =
+  "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams";
 const teamDetailUrl = (id) =>
-  `/espnapi/sports/basketball/nba/teams/${id}?enable=roster`;
+  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${id}?enable=roster`;
 
 async function fetchJSON(url) {
   const r = await fetch(url, { cache: "no-store" });
