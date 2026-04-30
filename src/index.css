@@ -79,6 +79,16 @@
   animation-delay: var(--sg-flip-delay, 0ms);
 }
 
+/* If a device/browser reduces or suppresses motion, force final colors. */
+@media (prefers-reduced-motion: reduce) {
+  .sg-flip {
+    animation: none !important;
+    background-color: var(--bg-final) !important;
+    border-color: var(--bd-final) !important;
+    color: var(--fg-final) !important;
+  }
+}
+
 /* small reveal used for ▲ / ▼ after flip finishes */
 @keyframes sg-appear {
   from {
