@@ -128,6 +128,26 @@ export default function Board({ onGameEnd, resetNonce }) {
     }
   }
 
+  async function ensureSolutionReady() {
+    if (solution) return true;
+    try {
+      const next = await newRound({
+        getAllActivePlayers,
+        getTopPlayers,
+        getCareerTeams,
+        mode: getMode(),
+      });
+      setSolution(next.solution);
+      setSolutionTeams(next.solutionTeams);
+      setGuesses(next.guesses);
+      setGameState(next.gameState);
+      return !!next.solution;
+    } catch (e) {
+      console.error("Failed to recover solution:", e);
+      return false;
+    }
+  }
+
   // debounced suggestions
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -188,6 +208,11 @@ export default function Board({ onGameEnd, resetNonce }) {
   const submitGuess = async (e) => {
     e.preventDefault();
     if (gameState !== "playing") return;
+    if (!(await ensureSolutionReady())) {
+      setError("Game still loading. Try again.");
+      setOpen(false);
+      return;
+    }
 
     const q = term.trim();
     if (!q || guesses.length >= MAX_GUESSES) return;
@@ -245,8 +270,13 @@ export default function Board({ onGameEnd, resetNonce }) {
     }
   };
 
-  const pickSuggestion = (s) => {
+  const pickSuggestion = async (s) => {
     if (gameState !== "playing") return;
+    if (!(await ensureSolutionReady())) {
+      setError("Game still loading. Try again.");
+      setOpen(false);
+      return;
+    }
     setOpen(false);
     setTerm("");
     if (guesses.length >= MAX_GUESSES) return;

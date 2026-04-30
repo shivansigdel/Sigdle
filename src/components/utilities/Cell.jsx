@@ -29,9 +29,10 @@ export default function Cell({ value = "", state = "idle", hint, delay }) {
         "--bd-final": finalColors.bd,
         "--fg-final": finalColors.fg,
         "--sg-flip-delay": `${delay}ms`,
-        backgroundColor: idleColors.bg,
-        borderColor: idleColors.bd,
-        color: idleColors.fg,
+        // Keep final colors visible even if animation is skipped by the browser.
+        backgroundColor: "var(--bg-final)",
+        borderColor: "var(--bd-final)",
+        color: "var(--fg-final)",
       }
     : {
         backgroundColor: finalColors.bg,

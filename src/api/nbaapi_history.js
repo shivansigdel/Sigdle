@@ -31,8 +31,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function fetchJSON(url, { retries = 1, retryDelayMs = 250 } = {}) {
   log("GET", url);
 
+  let timeoutId;
   try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
 
     if (res.status === 404) {
       warn("404 (Not Found) →", url);
@@ -54,6 +60,9 @@ async function fetchJSON(url, { retries = 1, retryDelayMs = 250 } = {}) {
 
     return await res.json();
   } catch (e) {
+    if (e?.name === "AbortError") {
+      warn("Request timeout →", url);
+    }
     if (retries > 0) {
       warn(`Fetch error (${e.message}); retrying in ${retryDelayMs}ms →`, url);
       await sleep(retryDelayMs);
@@ -64,6 +73,8 @@ async function fetchJSON(url, { retries = 1, retryDelayMs = 250 } = {}) {
     }
     err("Fetch failed:", e.message);
     throw e;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
