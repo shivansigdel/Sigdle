@@ -10,6 +10,7 @@ import SettingsModal from "./components/modal/SettingsModal";
 import { recordGameResult } from "./api/stats"; // persists stats
 
 export default function App() {
+  const [booting, setBooting] = useState(true);
   // --- modal state (collapsed to a single enum) ---
   const [activeModal, setActiveModal] = useState(null); // "info" | "stats" | "settings" | null
 
@@ -31,6 +32,7 @@ export default function App() {
 
   // --- first-load: decide which modal to show (Stats if prior round exists; Info if first time) ---
   useEffect(() => {
+    if (booting) return;
     const hasEverStarted = localStorage.getItem("sigdle-in-progress") === "1";
     const raw = localStorage.getItem("sigdle-state-v1");
 
@@ -62,6 +64,11 @@ export default function App() {
     }
     // first visit? show Info
     if (!hasEverStarted) setActiveModal("info");
+  }, [booting]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setBooting(false), 1200);
+    return () => clearTimeout(id);
   }, []);
 
   // --- ESC closes the currently open modal (only listens while one is open) ---
@@ -88,6 +95,22 @@ export default function App() {
     setEndInfo(null);
     setResetNonce((n) => n + 1);
   };
+
+  if (booting) {
+    return (
+      <div className="min-h-dvh w-full grid place-items-center bg-base-100 text-base-content">
+        <div className="text-center px-6">
+          <h1 className="text-5xl md:text-7xl font-black tracking-wide">SIGDLE</h1>
+          <p className="mt-3 text-base-content/70">Loading today&apos;s game...</p>
+          <div className="mt-6 flex justify-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-base-content/70 animate-bounce [animation-delay:0ms]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-base-content/70 animate-bounce [animation-delay:120ms]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-base-content/70 animate-bounce [animation-delay:240ms]" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full min-h-dvh flex flex-col bg-base-100 text-base-content">

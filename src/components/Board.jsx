@@ -128,29 +128,12 @@ export default function Board({ onGameEnd, resetNonce }) {
     }
   }
 
-  async function ensureSolutionReady() {
-    if (solution) return true;
-    try {
-      const next = await newRound({
-        getAllActivePlayers,
-        getTopPlayers,
-        getCareerTeams,
-        mode: getMode(),
-      });
-      setSolution(next.solution);
-      setSolutionTeams(next.solutionTeams);
-      setGuesses(next.guesses);
-      setGameState(next.gameState);
-      return !!next.solution;
-    } catch (e) {
-      console.error("Failed to recover solution:", e);
-      return false;
-    }
-  }
-
   // debounced suggestions
   useEffect(() => {
-    if (gameState !== "playing") return;
+    if (gameState !== "playing" || !solution) {
+      resetSuggest();
+      return;
+    }
     const q = term.trim();
     if (q.length < 2) {
       resetSuggest();
@@ -208,7 +191,7 @@ export default function Board({ onGameEnd, resetNonce }) {
   const submitGuess = async (e) => {
     e.preventDefault();
     if (gameState !== "playing") return;
-    if (!(await ensureSolutionReady())) {
+    if (!solution) {
       setError("Game still loading. Try again.");
       setOpen(false);
       return;
@@ -272,7 +255,7 @@ export default function Board({ onGameEnd, resetNonce }) {
 
   const pickSuggestion = async (s) => {
     if (gameState !== "playing") return;
-    if (!(await ensureSolutionReady())) {
+    if (!solution) {
       setError("Game still loading. Try again.");
       setOpen(false);
       return;
@@ -300,6 +283,7 @@ export default function Board({ onGameEnd, resetNonce }) {
             onSubmit={submitGuess}
             onBlur={handleBlur}
             onFocus={handleFocus}
+            placeholder={solution ? "Search player…" : "Loading game…"}
           />
 
           {/* overlay removed; suggestions already gated by !gameOver */}

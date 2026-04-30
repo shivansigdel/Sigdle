@@ -36,11 +36,16 @@ async function getPlayerPool(deps, mode, limit = EASY_LIMIT) {
     return await deps.getAllActivePlayers();
   }
   if (typeof deps.getTopPlayers === "function") {
-    const top = await deps.getTopPlayers(limit);
+    // Keep first paint/playability fast: don't let slow stats APIs block boot.
+    const top = await Promise.race([
+      deps.getTopPlayers(limit),
+      new Promise((resolve) => setTimeout(() => resolve(null), 1200)),
+    ]);
     if (Array.isArray(top) && top.length) return top;
   }
   // Fallback to all players if top list isn't available
-  return await deps.getAllActivePlayers();
+  const all = await deps.getAllActivePlayers();
+  return mode === MODE_EASY ? all.slice(0, limit) : all;
 }
 
 /* -------------------------
@@ -247,7 +252,11 @@ export function nextGameStateAfterGuess(
 // Resolve career teams with fallback to current team
 export async function resolveSolutionTeams(getCareerTeams, sol) {
   try {
-    const teams = await getCareerTeams(sol.name);
+    // Do not block boot on slow history endpoints.
+    const teams = await Promise.race([
+      getCareerTeams(sol.name),
+      new Promise((resolve) => setTimeout(() => resolve(null), 1200)),
+    ]);
     if (Array.isArray(teams) && teams.length) return teams;
   } catch {}
   return [sol.teamAbbr].filter(Boolean);
